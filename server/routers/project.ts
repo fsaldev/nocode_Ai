@@ -12,13 +12,14 @@ export const projectRouter = router({
 			z.object({
 				limit: z.number().min(1).max(100).default(20),
 				offset: z.number().min(0).default(0),
-			}),
+			}).optional(),
 		)
 		.query(async ({ ctx, input }) => {
+			const { limit = 20, offset = 0 } = input ?? {};
 			const projects = await ctx.prisma.project.findMany({
 				where: { userId: ctx.user.id },
-				take: input.limit,
-				skip: input.offset,
+				take: limit,
+				skip: offset,
 				orderBy: { createdAt: "desc" },
 			});
 

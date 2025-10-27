@@ -5,33 +5,35 @@ import { AIService } from '../services/ai-service'
 import { QueueService } from '../services/queue-service'
 
 export async function createContext({ req }: FetchCreateContextFnOptions) {
-  // Extract auth token from header
-  const token = req.headers.get('authorization')?.replace('Bearer ', '')
+  const cookieHeader = req.headers.get("cookie");
+  const cookies = Object.fromEntries(
+    (cookieHeader ?? "")
+      .split(";")
+      .map((c) => c.trim().split("="))
+      .filter(([k]) => k && k.length > 0)
+  );
 
-  // Get user from session if authenticated
-  let user = null
+  const token = cookies["auth_token"];
+  let user = null;
+
   if (token) {
     const session = await prisma.session.findUnique({
       where: { token },
       include: { user: true },
-    })
+    });
 
     if (session && session.expiresAt > new Date()) {
-      user = session.user
+      user = session.user;
     }
   }
-
-  // Initialize services for this request
-  const aiService = new AIService()
-  const queueService = new QueueService()
 
   return {
     req,
     prisma,
     user,
-    aiService,
-    queueService,
-  }
+    aiService: new AIService(),
+    queueService: new QueueService(),
+  };
 }
 
 export type Context = inferAsyncReturnType<typeof createContext>

@@ -20,7 +20,6 @@ export default function HomePage() {
 		limit: 20,
 		offset: 0,
 	});
-
 	const createProject = trpc.project.create.useMutation({
 		onSuccess: () => {
 			utils.project.list.invalidate();
@@ -126,9 +125,9 @@ export default function HomePage() {
 
 					{isLoading ? (
 						<div className="loading">Loading projects...</div>
-					) : projects && projects.length > 0 ? (
+					) : projects && Array.isArray(projects.json) && projects.json.length > 0 ? (
 						<div className="projects-grid">
-							{projects.map((project) => (
+						  {projects.json.map((project) => (
 								<div key={project.id} className="project-card">
 									<h3>{project.name}</h3>
 									{project.description && (

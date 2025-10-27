@@ -19,38 +19,24 @@ function getBaseUrl() {
 }
 
 export function TRPCProvider({ children }: { children: React.ReactNode }) {
-	const [queryClient] = useState(
-		() =>
-			new QueryClient({
-				defaultOptions: {
-					queries: {
-						staleTime: 5 * 1000,
-						refetchOnWindowFocus: false,
-					},
-				},
-			}),
-	);
+	const [queryClient] = useState(() => new QueryClient());
 
-	const [trpcClient] = useState(() => {
-		const token =
-			typeof window !== "undefined"
-				? localStorage.getItem("auth_token") || ""
-				: "";
-
+	const trpcClient = React.useMemo(() => {
 		return trpc.createClient({
-			links: [
-				httpBatchLink({
-					url: `${getBaseUrl()}/api/trpc`,
-					transformer: superjson,
-					headers() {
-						return {
-							authorization: `Bearer ${token}`,
-						};
-					},
-				}),
-			],
+		  transformer: superjson,
+		  links: [
+			httpBatchLink({
+			  url: "/api/trpc",
+			  fetch(url, options) {
+				return fetch(url, {
+				  ...options,
+				  credentials: "include",
+				});
+			  },
+			}),
+		  ],
 		});
-	});
+	  }, []);
 
 	return (
 		<trpc.Provider client={trpcClient} queryClient={queryClient}>
