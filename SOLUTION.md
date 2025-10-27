@@ -1,8 +1,8 @@
 # Technical Assessment Solution
 
-**Candidate Name**: _________________________
-**Date**: _________________________
-**Time Spent**: _________ hours
+**Candidate Name**: _Farukh saleem________________________
+**Date**: ___________10/27/2925______________
+**Time Spent**: ______4___ hours
 
 ---
 
@@ -11,247 +11,258 @@
 Provide a brief overview (3-5 sentences) of the main issues you found and your overall assessment of the codebase.
 
 ```
-[Your summary here]
+## **Executive Summary**
+
+The primary issues identified in the codebase revolved around authentication flow inconsistencies, type safety errors, and data handling mismatches between server and client. The initial use of `localStorage` for token management introduced race conditions and unreliable session handling, which were resolved by transitioning to secure HttpOnly cookies. Data serialization mismatches and missing logout/session validation endpoints were also addressed to ensure consistent, secure, and predictable user experiences. Additionally, TypeScript build issues and hydration warnings were fixed to improve code stability and maintainability. Overall, the refactored implementation enhances security, reliability, and developer experience across both client and server layers.
+
 ```
 
 ---
 
-## Part 1: Issues Found & Fixed
+# Part 1: Issues Found & Fixed
 
-For each significant issue you found, document it using this format:
+### Issue #1: Unauthorized (401) on First Login
 
-### Issue #1: [Title]
+**Severity**: High  
+**Category**: Authentication / Race Condition  
+**Location**: `server\context.ts
+               lib\trpc-client.tsx
+               app\api\auth\login\route.ts
+               app\page.tsx`  
 
-**Severity**: Critical / High / Medium
-**Category**: Performance / Memory / Concurrency / Security / Architecture
-**Location**: `path/to/file.ts:approx-line-number`
-
-**Description**:
+**Description**:  
 ```
-[What is the issue?]
-```
-
-**Impact**:
-```
-[How does this affect the application in production?]
+A race condition occurred where the TRPCProvider initialized before the authentication token was available in localStorage. As a result, the first tRPC request (project.list) was sent without the authorization header, leading to a 401 Unauthorized response.
 ```
 
-**Root Cause**:
+**Impact**:  
 ```
-[Why does this happen? What's the underlying problem?]
-```
-
-**Solution**:
-```
-[How did you fix it? What approach did you take?]
+Users encountered a 401 error upon their first login, disrupting the initial user experience and blocking access to dashboard data until a manual refresh.
 ```
 
-**Trade-offs**:
+**Root Cause**:  
 ```
-[Are there any downsides to your solution? Alternative approaches?]
-```
-
----
-
-### Issue #2: [Title]
-
-**Severity**:
-**Category**:
-**Location**:
-
-**Description**:
-
-**Impact**:
-
-**Root Cause**:
-
-**Solution**:
-
-**Trade-offs**:
-
----
-
-[Continue for all issues found...]
-
----
-
-## Part 2: Architecture Analysis
-
-### Current Architecture
-
-Describe your understanding of how the system is structured:
-
-```
-[Your analysis]
+The tRPC client initialized before the authentication token was written to localStorage, causing the first API request to lack authorization headers.
 ```
 
-### Strengths
-
-What's done well in this codebase?
-
+**Solution**:  
 ```
-[Your analysis]
+Replaced localStorage-based authentication with secure HttpOnly cookies for storing tokens.  
+Cookies are automatically sent with every API request, ensuring proper authentication and removing race conditions.
 ```
 
-### Weaknesses
-
-What are the main architectural concerns?
-
+**Trade-offs**:  
 ```
-[Your analysis]
+Requires backend and frontend coordination for cookie management.  
+However, this approach significantly improves security and reliability.
 ```
 
 ---
 
-## Part 3: Scaling Recommendations
+### Issue #2: 400 Bad Request (Invalid Input Type)
 
-### How would you scale this to 10,000+ concurrent users?
+**Severity**: Medium  
+**Category**: Validation / API Contract  
+**Location**: `server/routes/project.ts`  
 
-**Database Layer**:
+**Description**:  
 ```
-[Your recommendations]
-```
-
-**Application Layer**:
-```
-[Your recommendations]
+The project.list procedure’s input schema required an object but received undefined when the client made a query without parameters.
 ```
 
-**Queue/Background Jobs**:
+**Impact**:  
 ```
-[Your recommendations]
-```
-
-**AI Integration**:
-```
-[Your recommendations]
+API calls to project.list failed with a 400 Bad Request error, breaking project data fetching.
 ```
 
-**Monitoring & Observability**:
+**Root Cause**:  
 ```
-[What would you track? What alerts would you set up?]
-```
-
----
-
-## Part 4: Production Readiness
-
-### What's missing for production deployment?
-
-**Infrastructure**:
-```
-- [ ] Item 1
-- [ ] Item 2
+The zod schema used for validating input expected an object but the client provided no arguments, resulting in a type mismatch.
 ```
 
-**Monitoring**:
+**Solution**:  
 ```
-- [ ] Item 1
-- [ ] Item 2
-```
-
-**Security**:
-```
-- [ ] Item 1
-- [ ] Item 2
+Made the input schema optional and provided default values to ensure compatibility with calls that don’t require explicit input.
 ```
 
-**Testing**:
+**Trade-offs**:  
 ```
-- [ ] Item 1
-- [ ] Item 2
+Slightly reduces strictness of validation, but improves developer experience and prevents unnecessary runtime errors.
 ```
 
 ---
 
-## Part 5: AI Integration Review
+### Issue #3: “No Projects Yet” Displayed Despite Data
 
-### Current Prompt Engineering
+**Severity**: High  
+**Category**: Data Serialization / Client Configuration  
+**Location**: `app/page.tsx`  
 
-What did you observe about how prompts are structured?
-
+**Description**:  
 ```
-[Your analysis]
-```
-
-### Cost Optimization Opportunities
-
-How could AI costs be reduced?
-
-```
-[Your recommendations]
+The UI displayed “No Projects Yet” even when data existed on the server due to improper data deserialization on the client.
 ```
 
-### Improvements Made
-
-What did you change in the AI integration?
-
+**Impact**:  
 ```
-[Your changes]
+Users saw incorrect empty states, causing confusion and misreporting of data availability.
 ```
 
----
-
-## Part 6: Additional Observations
-
-### Code Quality
-
+**Root Cause**:  
 ```
-[Comments on overall code quality, patterns used, etc.]
+The superjson transformer was configured only on the server side, leading to mismatched serialization formats between client and server.
 ```
 
-### Testing Strategy
-
-If you were to add tests, what would you prioritize?
-
+**Solution**:  
 ```
-[Your approach]
+Added `transformer: superjson` to the tRPC client configuration to ensure consistent serialization on both ends.
 ```
 
-### Documentation
-
+**Trade-offs**:  
 ```
-[Comments on code documentation, API docs, etc.]
+Minimal — adds a dependency on `superjson` on both server and client, but ensures reliable data handling.
 ```
 
 ---
 
-## Part 7: Time Management & Priorities
+### Issue #4: Missing Logout Handling
 
-### How did you spend your time?
+**Severity**: Medium  
+**Category**: Authentication / Session Management  
+**Location**: `app/api/auth/logout/route.ts`  
 
+**Description**:  
 ```
-- Setup & exploration: ___ minutes
-- Issue identification: ___ minutes
-- Implementing fixes: ___ minutes
-- Testing: ___ minutes
-- Documentation: ___ minutes
-```
-
-### Prioritization
-
-Why did you choose to fix the issues you fixed?
-
-```
-[Your reasoning]
+There was no API endpoint to clear the authentication cookie, preventing proper user logout.
 ```
 
-### What would you do with more time?
-
+**Impact**:  
 ```
-[Issues you identified but didn't have time to fix]
+Users remained authenticated even after attempting to log out, posing a potential security and privacy risk.
+```
+
+**Root Cause**:  
+```
+The backend did not expose a logout route that invalidates or clears the authentication token.
+```
+
+**Solution**:  
+```
+Implemented `/api/auth/logout` endpoint to clear the `auth_token` cookie, ensuring proper session termination.
+```
+
+**Trade-offs**:  
+```
+None significant — improves security and aligns with cookie-based authentication best practices.
 ```
 
 ---
 
-## Part 8: Questions & Discussion Points
+### Issue #5: Redirected Back to Login After Successful Authentication
 
-### Questions for the team
+**Severity**: High  
+**Category**: Authentication / State Management  
+**Location**: `components\auth-wrapper.tsx
+               app\api\auth\me\route.ts`  
 
+**Description**:  
 ```
-1. [Question about architecture decisions]
-2. [Question about requirements or constraints]
-3. [Question about future plans]
+After successful authentication, users were redirected back to the login page due to outdated validation logic.
+```
+
+**Impact**:  
+```
+Users experienced broken login flow and were unable to access authenticated routes despite being logged in.
+```
+
+**Root Cause**:  
+```
+The AuthWrapper component validated sessions using localStorage, which was deprecated after switching to cookie-based authentication.
+```
+
+**Solution**:  
+```
+Updated AuthWrapper to validate sessions by calling the new `/api/auth/me` endpoint.  
+This endpoint verifies the `auth_token` cookie on the server for session validity.
+```
+
+**Trade-offs**:  
+```
+Adds a lightweight server call for session verification but ensures accurate authentication state.
+```
+
+### Issue #6: TypeScript Build Error in useGenerationPolling
+
+**Severity**: High  
+**Category**: TypeScript / Build  
+**Location**:  
+`lib/hooks/useGenerationPolling.ts`  
+
+**Description**:  
+```
+The hook failed to compile because `setStatus(gen.status)` triggered a type error.  
+The variable `gen.status` was inferred as a plain string instead of the expected union type 
+"pending" | "processing" | "completed" | "failed".
+```
+
+**Impact**:  
+```
+The TypeScript build failed, breaking the generation polling functionality and blocking deployment.
+```
+
+**Root Cause**:  
+```
+The TypeScript type inference did not correctly match the expected union type, leading to a mismatch 
+between the API response and the local state definition.
+```
+
+**Solution**:  
+```
+Introduced a `GenerationStatus` type and safely cast `gen.status`.  
+Enhanced the hook by adding `projectId`, cleanup via `clearInterval`, and functional state updates 
+to prevent stale closures during polling.
+```
+
+**Trade-offs**:  
+```
+Adds minor verbosity due to type casting but ensures complete type safety, cleaner reactivity, 
+and predictable polling behavior.
+```
+### Issue #7: React Hydration Mismatch Warning
+
+**Severity**: Low  
+**Category**: Rendering / Hydration  
+**Location**:  
+`app/layout.tsx`  
+
+**Description**:  
+```
+During hydration, the client and server HTML attributes didn’t match due to injected browser 
+extension attributes (data-gr-ext-installed, cz-shortcut-listen, etc.).
+```
+
+**Impact**:  
+```
+Console displayed hydration mismatch warnings, potentially leading to unstable or unpredictable 
+UI rendering during development.
+```
+
+**Root Cause**:  
+```
+Injected attributes from browser extensions caused discrepancies between server-rendered and 
+client-rendered DOM, triggering React hydration mismatch warnings.
+```
+
+**Solution**:  
+```
+Added `suppressHydrationWarning={true}` to the <body> tag to safely ignore non-critical attribute 
+mismatches caused by external scripts or extensions.
+```
+
+**Trade-offs**:  
+```
+Minor suppression of hydration warnings, but ensures clean console output and stable hydration 
+behavior in both development and production builds.
 ```
 
 ### Areas for discussion
@@ -280,7 +291,7 @@ Why did you choose to fix the issues you fixed?
 Any final comments about the assessment, your approach, or the codebase?
 
 ```
-[Your thoughts]
+This assessment provided a well-rounded opportunity to debug and improve critical areas such as authentication, state management, and type safety. My approach focused on achieving production-level reliability by replacing fragile client-side token handling with secure cookie-based authentication and ensuring strong type contracts across the stack. Each fix was implemented with long-term maintainability and scalability in mind, while preserving clarity and simplicity in the codebase. Overall, the project now follows cleaner architecture principles, offering a more stable, secure, and developer-friendly foundation for future growth.
 ```
 
 ---
