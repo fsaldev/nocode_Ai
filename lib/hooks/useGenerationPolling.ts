@@ -3,9 +3,10 @@
 
 import { useEffect, useState } from "react";
 import { trpc } from "../trpc-client";
-
+type GenerationStatus = "pending" | "processing" | "completed" | "failed";
 interface UseGenerationPollingOptions {
 	generationId: string;
+	projectId?: string;
 	enabled?: boolean;
 	interval?: number;
 	onComplete?: (result: string) => void;
@@ -14,13 +15,14 @@ interface UseGenerationPollingOptions {
 
 export function useGenerationPolling({
 	generationId,
+	projectId,
 	enabled = true,
 	interval = 2000,
 	onComplete,
 	onError,
 }: UseGenerationPollingOptions) {
 	const [status, setStatus] = useState<
-		"pending" | "processing" | "completed" | "failed"
+	GenerationStatus
 	>("pending");
 	const [result, setResult] = useState<string | null>(null);
 	const [attempts, setAttempts] = useState(0);
@@ -46,12 +48,13 @@ export function useGenerationPolling({
 				const gen = generation.find((g: any) => g.id === generationId);
 
 				if (gen) {
-					setStatus(gen.status);
+					const genStatus = gen.status as GenerationStatus;
+					setStatus(genStatus);
 
-					if (gen.status === "completed") {
-						setResult(gen.result);
+					if (genStatus === "completed") {
+						setResult(gen.result ?? null);
 						if (onComplete) {
-							onComplete(gen.result);
+							onComplete?.(gen.result ?? "")
 						}
 					} else if (gen.status === "failed") {
 						if (onError) {
