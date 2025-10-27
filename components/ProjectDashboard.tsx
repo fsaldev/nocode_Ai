@@ -21,7 +21,7 @@ export default function ProjectDashboard({ projectId }: ProjectDashboardProps) {
 	const { data: project, refetch } = trpc.project.getById.useQuery({
 		id: projectId,
 	});
-	const { data: stats } = trpc.project.getStats.useQuery({ id: projectId });
+	const { data: stats } = trpc.project.getStats.useQuery({ projectId });
 	const { data: generations } = trpc.project.getGenerations.useQuery({
 		projectId,
 		limit: 20,
@@ -74,7 +74,7 @@ export default function ProjectDashboard({ projectId }: ProjectDashboardProps) {
 	}, [projectId]);
 
 	// Calculate filtered generations
-	const filteredGenerations = generations?.filter((gen) => {
+	const filteredGenerations = generations?.filter((gen:any) => {
 		if (!filter) return true;
 		return gen.prompt.toLowerCase().includes(filter.toLowerCase());
 	});
@@ -82,9 +82,9 @@ export default function ProjectDashboard({ projectId }: ProjectDashboardProps) {
 	// Calculate statistics
 	const successRate = stats
 		? (
-				(stats.successfulGenerations / stats.totalGenerations) *
-				100
-			).toFixed(1)
+			(stats.successfulGenerations / stats.totalGenerations) *
+			100
+		).toFixed(1)
 		: "0";
 
 	const avgTokensPerGeneration = stats
@@ -187,7 +187,7 @@ export default function ProjectDashboard({ projectId }: ProjectDashboardProps) {
 
 					<div className="components-section">
 						<h3>Components ({project.components.length})</h3>
-						{project.components.map((component, index) => (
+						{project.components.map((component:any, index:any) => (
 							<ComponentCard
 								key={index}
 								name={component.name}
@@ -211,7 +211,7 @@ export default function ProjectDashboard({ projectId }: ProjectDashboardProps) {
 					</div>
 
 					<div className="generations-list">
-						{filteredGenerations?.map((generation, idx) => (
+						{filteredGenerations?.map((generation:any, idx:any) => (
 							<GenerationCard
 								key={generation.id}
 								generation={generation}
