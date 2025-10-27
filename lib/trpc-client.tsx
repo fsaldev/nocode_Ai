@@ -23,11 +23,11 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
 
 	const trpcClient = React.useMemo(() => {
 		return trpc.createClient({
-		  transformer: superjson,
 		  links: [
 			httpBatchLink({
 			  url: "/api/trpc",
-			  fetch(url, options) {
+			  transformer: superjson,
+			  fetch(url: RequestInfo | URL, options?: RequestInit) {
 				return fetch(url, {
 				  ...options,
 				  credentials: "include",

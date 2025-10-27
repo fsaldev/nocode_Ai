@@ -32,10 +32,14 @@ export default function HomePage() {
 	const handleCreateProject = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (newProjectName.trim()) {
-			createProject.mutate({
+			const input: { name: string; description?: string } = {
 				name: newProjectName,
-				description: newProjectDescription || undefined,
-			});
+			};
+			// Only add description if it has a value
+			if (newProjectDescription.trim()) {
+				input.description = newProjectDescription;
+			}
+			createProject.mutate(input);
 		}
 	};
 
@@ -127,11 +131,11 @@ export default function HomePage() {
 						</div>
 					)}
 
-					{isLoading ? (
-						<div className="loading">Loading projects...</div>
-					) : projects && Array.isArray(projects.json) && projects.json.length > 0 ? (
-						<div className="projects-grid">
-						  {projects.json.map((project) => (
+				{isLoading ? (
+					<div className="loading">Loading projects...</div>
+				) : projects && Array.isArray(projects) && projects.length > 0 ? (
+					<div className="projects-grid">
+					  {projects.map((project) => (
 								<div key={project.id} className="project-card">
 									<h3>{project.name}</h3>
 									{project.description && (
