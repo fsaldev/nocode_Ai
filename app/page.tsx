@@ -39,10 +39,14 @@ export default function HomePage() {
 		}
 	};
 
-	const handleLogout = () => {
-		localStorage.removeItem("auth_token");
+	const handleLogout = async () => {
+		await fetch("/api/auth/logout", {
+		  method: "POST",
+		  credentials: "include",
+		});
 		router.push("/auth/login");
-	};
+	  };
+	  
 
 	return (
 		<AuthWrapper>

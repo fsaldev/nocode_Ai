@@ -21,6 +21,7 @@ export default function LoginPage() {
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({ email }),
+				credentials: "include",
 			});
 
 			if (!response.ok) {
@@ -29,9 +30,6 @@ export default function LoginPage() {
 			}
 
 			const data = await response.json();
-
-			// Store the token in localStorage
-			localStorage.setItem("auth_token", data.token);
 
 			// Redirect to home page
 			router.push("/");
