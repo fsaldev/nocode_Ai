@@ -8,14 +8,25 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
 	const [isChecking, setIsChecking] = useState(true);
 
 	useEffect(() => {
-		const token = localStorage.getItem("auth_token");
-
-		if (!token) {
-			router.push("/auth/login");
-		} else {
+		const verifySession = async () => {
+		  try {
+			const res = await fetch("/api/auth/me", {
+			  credentials: "include", 
+			});
+	
+			if (!res.ok) throw new Error("Unauthorized");
+	
+			const data = await res.json();
+			if (!data?.user) throw new Error("Unauthorized");
+	
 			setIsChecking(false);
-		}
-	}, [router]);
+		  } catch {
+			router.push("/auth/login");
+		  }
+		};
+	
+		verifySession();
+	  }, [router]);
 
 	if (isChecking) {
 		return (
