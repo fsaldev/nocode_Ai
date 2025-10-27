@@ -1,17 +1,12 @@
-// tRPC context setup
-// Creates context for each request with user authentication and services
-
 import { inferAsyncReturnType } from '@trpc/server'
-import { CreateNextContextOptions } from '@trpc/server/adapters/next'
+import { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch'
 import prisma from '../lib/prisma'
 import { AIService } from '../services/ai-service'
 import { QueueService } from '../services/queue-service'
 
-export async function createContext(opts: CreateNextContextOptions) {
-  const { req, res } = opts
-
+export async function createContext({ req }: FetchCreateContextFnOptions) {
   // Extract auth token from header
-  const token = req.headers.authorization?.replace('Bearer ', '')
+  const token = req.headers.get('authorization')?.replace('Bearer ', '')
 
   // Get user from session if authenticated
   let user = null
@@ -32,7 +27,6 @@ export async function createContext(opts: CreateNextContextOptions) {
 
   return {
     req,
-    res,
     prisma,
     user,
     aiService,
